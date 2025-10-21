@@ -96,7 +96,7 @@ local function EnableAutoZoom(state)
 	else
 		zoomButton.Text = "🔴 AutoZoom : OFF"
 		zoomButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-		camera.CameraType = Enum.CameraType.Custom -- ✅ กลับกล้องปกติ
+		camera.CameraType = Enum.CameraType.Custom
 		if autoZoomConn then
 			autoZoomConn:Disconnect()
 			autoZoomConn = nil
@@ -172,13 +172,20 @@ local function AttackBoss(bossModel)
 	return false
 end
 
---===[ ระบบตรวจ SJW ใหม่ทุกๆ 10 วิ ]===--
+--===[ ระบบตรวจ SJW ใหม่ทุกๆ 10 วิ และตรวจ Humanoid ]===--
 local latestSJW = nil
 task.spawn(function()
 	while true do
 		local sjwArea = workspace.Main.Characters:FindFirstChild("Rogue Town")
 		local sjwBossFolder = sjwArea and sjwArea:FindFirstChild("Boss")
-		latestSJW = sjwBossFolder and sjwBossFolder:FindFirstChild("Sung Jin Woo")
+		local sjw = sjwBossFolder and sjwBossFolder:FindFirstChild("Sung Jin Woo")
+
+		if sjw and sjw:FindFirstChild("Humanoid") and sjw.Humanoid.Health > 0 then
+			latestSJW = sjw
+		else
+			latestSJW = nil
+		end
+
 		task.wait(10)
 	end
 end)
@@ -189,24 +196,15 @@ task.spawn(function()
 		if getgenv().AutoFarmMihawk and getgenv().gx then
 			pcall(function()
 				local char, hrp = waitForCharacter()
-
-				-- ตรวจ Mihawk
 				local mihawk = workspace.Main.Characters["Glacier Isle"].Mihawk:FindFirstChild("Mihawk")
-
-				-- ตรวจ SJW จากตัวล่าสุดที่อัปเดต
 				local sjwBoss = latestSJW
 
-				if sjwBoss and sjwBoss:FindFirstChild("Humanoid") and sjwBoss.Humanoid.Health > 0 then
+				if sjwBoss then
 					AttackBoss(sjwBoss)
-				elseif sjwBoss and sjwBoss:FindFirstChild("Humanoid") and sjwBoss.Humanoid.Health <= 0 then
-					hrp.CFrame = deathPosition
-					task.wait(1)
-				elseif not sjwBoss or not sjwBoss:FindFirstChild("Humanoid") then
-					-- ถ้า SJW ไม่มีในแมพเลย ให้กลับจุดรับเควส
-					hrp.CFrame = deathPosition
 				elseif mihawk and mihawk:FindFirstChild("Humanoid") and mihawk.Humanoid.Health > 0 then
 					AttackBoss(mihawk)
-				elseif mihawk and mihawk:FindFirstChild("Humanoid") and mihawk.Humanoid.Health <= 0 then
+				else
+					-- ไม่มีบอสใดๆ อยู่บนแมพ กลับจุดรับเควส
 					hrp.CFrame = deathPosition
 				end
 			end)

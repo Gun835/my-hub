@@ -1,4 +1,5 @@
---// 🔥 AutoFarm Mihawk + SJW + AutoZoom Camera (Check SJW every 10s) 🔥
+--// 🔥 AutoFarm Mihawk + SJW + AutoZoom (UI ใหม่) 🔥
+--// by กัน
 
 local player = game:GetService("Players").LocalPlayer
 local PlayerGui = player:WaitForChild("PlayerGui")
@@ -7,80 +8,71 @@ local Remotes = ReplicatedStorage:WaitForChild("Remotes"):WaitForChild("Serversi
 local runService = game:GetService("RunService")
 local camera = workspace.CurrentCamera
 
---===[ 🌙 สร้าง UI หลัก ]===--
-local gui = Instance.new("ScreenGui")
+--===[ UI Setup ใหม่ ]===--
+local gui = Instance.new("ScreenGui", PlayerGui)
 gui.Name = "FarmControlUI"
 gui.ResetOnSpawn = false
-gui.Parent = PlayerGui
 
-local frame = Instance.new("Frame")
-frame.Size = UDim2.new(0, 220, 0, 150)
-frame.Position = UDim2.new(0.5, -110, 0.1, 0)
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0, 220, 0, 110)
+frame.Position = UDim2.new(0.8, 0, 0.1, 0)
 frame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
-frame.BackgroundTransparency = 0.2
-frame.Parent = gui
+frame.BackgroundTransparency = 0.1
 frame.Active = true
 frame.Draggable = true
 
-local title = Instance.new("TextLabel")
-title.Size = UDim2.new(1, 0, 0, 30)
-title.BackgroundTransparency = 1
-title.Text = "⚙️ Mihawk Farm Control"
-title.TextColor3 = Color3.new(1, 1, 1)
-title.Font = Enum.Font.SourceSansBold
-title.TextSize = 18
-title.Parent = frame
+local function makeButton(name, order)
+	local btn = Instance.new("TextButton", frame)
+	btn.Size = UDim2.new(1, -20, 0, 40)
+	btn.Position = UDim2.new(0, 10, 0, (order - 1) * 50 + 10)
+	btn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+	btn.TextColor3 = Color3.new(1,1,1)
+	btn.Font = Enum.Font.GothamBold
+	btn.TextSize = 16
+	btn.Text = name
+	btn.AutoButtonColor = true
+	btn.BorderSizePixel = 0
+	return btn
+end
 
---===[ ปุ่ม AutoFarm ]===--
-local toggleButton = Instance.new("TextButton")
-toggleButton.Size = UDim2.new(0.9, 0, 0, 40)
-toggleButton.Position = UDim2.new(0.05, 0, 0.35, 0)
-toggleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-toggleButton.TextColor3 = Color3.new(1, 1, 1)
-toggleButton.Font = Enum.Font.SourceSansBold
-toggleButton.TextSize = 18
-toggleButton.Text = "🔴 AutoFarm : OFF"
-toggleButton.Parent = frame
-
---===[ ปุ่ม AutoZoom ]===--
-local zoomButton = Instance.new("TextButton")
-zoomButton.Size = UDim2.new(0.9, 0, 0, 40)
-zoomButton.Position = UDim2.new(0.05, 0, 0.70, 0)
-zoomButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
-zoomButton.TextColor3 = Color3.new(1, 1, 1)
-zoomButton.Font = Enum.Font.SourceSansBold
-zoomButton.TextSize = 18
-zoomButton.Text = "🔴 AutoZoom : OFF"
-zoomButton.Parent = frame
+local autoFarmBtn = makeButton("AutoFarm 🔴", 1)
+local autoZoomBtn = makeButton("AutoZoom 🔴", 2)
 
 --===[ ตัวแปรสถานะ ]===--
 getgenv().AutoFarmMihawk = false
+getgenv().AutoZoom = true -- เปิด AutoZoom อัตโนมัติ
 getgenv().gx = true
-getgenv().AutoZoom = true -- ✅ เปิดอัตโนมัติเมื่อเริ่มต้น
 
---===[ ฟังก์ชันเปิด/ปิด AutoFarm ]===--
-local function ToggleAutoFarm(state)
-	getgenv().AutoFarmMihawk = state
-	if state then
-		toggleButton.Text = "🟢 AutoFarm : ON"
-		toggleButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
-	else
-		toggleButton.Text = "🔴 AutoFarm : OFF"
-		toggleButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+--===[ ปรับ ProximityPrompt ]===--
+for _, obj in pairs(workspace:GetDescendants()) do
+	if obj:IsA("ProximityPrompt") then
+		obj.HoldDuration = 0
 	end
 end
 
-toggleButton.MouseButton1Click:Connect(function()
+--===[ ฟังก์ชัน Toggle AutoFarm ]===--
+local function ToggleAutoFarm(state)
+	getgenv().AutoFarmMihawk = state
+	if state then
+		autoFarmBtn.Text = "AutoFarm 🟢"
+		autoFarmBtn.BackgroundColor3 = Color3.fromRGB(0,170,0)
+	else
+		autoFarmBtn.Text = "AutoFarm 🔴"
+		autoFarmBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
+	end
+end
+
+autoFarmBtn.MouseButton1Click:Connect(function()
 	ToggleAutoFarm(not getgenv().AutoFarmMihawk)
 end)
 
---===[ ฟังก์ชันเปิด/ปิด AutoZoom กล้อง ]===--
+--===[ ฟังก์ชัน AutoZoom ]===--
 local autoZoomConn
 local function EnableAutoZoom(state)
 	getgenv().AutoZoom = state
 	if state then
-		zoomButton.Text = "🟢 AutoZoom : ON"
-		zoomButton.BackgroundColor3 = Color3.fromRGB(0, 170, 0)
+		autoZoomBtn.Text = "AutoZoom 🟢"
+		autoZoomBtn.BackgroundColor3 = Color3.fromRGB(0,170,0)
 
 		autoZoomConn = runService.RenderStepped:Connect(function()
 			if not getgenv().AutoZoom then return end
@@ -91,11 +83,11 @@ local function EnableAutoZoom(state)
 			camera.CameraType = Enum.CameraType.Scriptable
 			local maxZoom = player.CameraMaxZoomDistance or 128
 			local zoom = math.min(maxZoom, 100)
-			camera.CFrame = hrp.CFrame * CFrame.new(0, zoom, 0) * CFrame.Angles(math.rad(-90), 0, 0)
+			camera.CFrame = hrp.CFrame * CFrame.new(0, zoom, 0) * CFrame.Angles(math.rad(-90),0,0)
 		end)
 	else
-		zoomButton.Text = "🔴 AutoZoom : OFF"
-		zoomButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+		autoZoomBtn.Text = "AutoZoom 🔴"
+		autoZoomBtn.BackgroundColor3 = Color3.fromRGB(70,70,70)
 		camera.CameraType = Enum.CameraType.Custom
 		if autoZoomConn then
 			autoZoomConn:Disconnect()
@@ -104,18 +96,11 @@ local function EnableAutoZoom(state)
 	end
 end
 
-zoomButton.MouseButton1Click:Connect(function()
+autoZoomBtn.MouseButton1Click:Connect(function()
 	EnableAutoZoom(not getgenv().AutoZoom)
 end)
 
---===[ ปรับ ProximityPrompt ]===--
-for _, obj in pairs(workspace:GetDescendants()) do
-	if obj:IsA("ProximityPrompt") then
-		obj.HoldDuration = 0
-	end
-end
-
---===[ ฟังก์ชันระบบฟาร์ม ]===--
+--===[ ฟังก์ชันอื่นๆ ระบบฟาร์ม Mihawk + SJW ]===--
 local HakiArgs = {"Server","Misc","Haki",1}
 
 local function ActivateHaki()
@@ -147,12 +132,7 @@ task.spawn(function()
 end)
 
 -- จุดวาร์ปกลับ
-local deathPosition = CFrame.new(
-	-30.7399998, 2.22399998, 156.429993, 
-	0.983286619, 0, 0.182064503,
-	0, 1, 0,
-	-0.182064503, 0, 0.983286619
-)
+local deathPosition = CFrame.new(-30.7399998, 2.22399998, 156.429993)
 
 local function AttackBoss(bossModel)
 	local char, hrp = waitForCharacter()
@@ -160,11 +140,11 @@ local function AttackBoss(bossModel)
 	local hum = bossModel:FindFirstChild("Humanoid")
 
 	if Mon and hum and hum.Health > 0 then
-		hrp.CFrame = Mon.CFrame * CFrame.new(0, 0, 5)
-		Remotes:FireServer("Server", "Sword", "M1s", "Dual Dagger", 1)
+		hrp.CFrame = Mon.CFrame * CFrame.new(0,0,5)
+		Remotes:FireServer("Server","Sword","M1s","Dual Dagger",1)
 		task.wait(0.2)
-		for i = 1,4 do
-			Remotes:FireServer("Server", "Sword", "Skill"..i, "Dual Dagger")
+		for i=1,4 do
+			Remotes:FireServer("Server","Sword","Skill"..i,"Dual Dagger")
 			task.wait(0.2)
 		end
 		return true
@@ -172,7 +152,7 @@ local function AttackBoss(bossModel)
 	return false
 end
 
---===[ ระบบตรวจ SJW ใหม่ทุกๆ 10 วิ และตรวจ Humanoid ]===--
+-- ระบบตรวจ SJW ทุก 10 วิ
 local latestSJW = nil
 task.spawn(function()
 	while true do
@@ -190,7 +170,7 @@ task.spawn(function()
 	end
 end)
 
---===[ ระบบ AutoFarm หลัก ]===--
+-- ระบบ AutoFarm หลัก
 task.spawn(function()
 	while true do
 		if getgenv().AutoFarmMihawk and getgenv().gx then
@@ -204,7 +184,6 @@ task.spawn(function()
 				elseif mihawk and mihawk:FindFirstChild("Humanoid") and mihawk.Humanoid.Health > 0 then
 					AttackBoss(mihawk)
 				else
-					-- ไม่มีบอสใดๆ อยู่บนแมพ กลับจุดรับเควส
 					hrp.CFrame = deathPosition
 				end
 			end)
@@ -213,7 +192,7 @@ task.spawn(function()
 	end
 end)
 
---===[ เปิด AutoFarm + AutoZoom ตอนเริ่มต้น ]===--
+-- เปิด AutoFarm + AutoZoom ตอนเริ่มต้น
 task.delay(2, function()
 	ToggleAutoFarm(true)
 	EnableAutoZoom(true)

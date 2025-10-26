@@ -1,4 +1,4 @@
---// 🔥 AutoFarm Mihawk + SJW + AutoZoom (UI ใหม่) 🔥
+--// 🔥 AutoFarm Mihawk + SJW + AutoZoom + AutoEquip Weapon (UI ใหม่) 🔥
 --// by กัน
 
 local player = game:GetService("Players").LocalPlayer
@@ -42,6 +42,8 @@ local autoZoomBtn = makeButton("AutoZoom 🔴", 2)
 getgenv().AutoFarmMihawk = false
 getgenv().AutoZoom = true -- เปิด AutoZoom อัตโนมัติ
 getgenv().gx = true
+local Weapon = "Dual Dagger" -- ชื่ออาวุธของกัน
+local Delay = 0.3
 
 --===[ ปรับ ProximityPrompt ]===--
 for _, obj in pairs(workspace:GetDescendants()) do
@@ -100,7 +102,7 @@ autoZoomBtn.MouseButton1Click:Connect(function()
 	EnableAutoZoom(not getgenv().AutoZoom)
 end)
 
---===[ ฟังก์ชันอื่นๆ ระบบฟาร์ม Mihawk + SJW ]===--
+--===[ ฟังก์ชันระบบ ]===--
 local HakiArgs = {"Server","Misc","Haki",1}
 
 local function ActivateHaki()
@@ -120,7 +122,18 @@ local function waitForCharacter()
 	return char, hrp, humanoid
 end
 
--- Auto Haki loop
+--===[ ฟังก์ชันถืออาวุธอัตโนมัติ ]===--
+local function AutoEquipWeapon()
+	pcall(function()
+		local backpack = player:WaitForChild("Backpack")
+		local tool = backpack:FindFirstChild(Weapon)
+		if tool then
+			tool.Parent = player.Character
+		end
+	end)
+end
+
+--===[ Auto Haki loop ]===--
 task.spawn(function()
 	while true do
 		local _, _, humanoid = waitForCharacter()
@@ -134,25 +147,27 @@ end)
 -- จุดวาร์ปกลับ
 local deathPosition = CFrame.new(-30.7399998, 2.22399998, 156.429993)
 
+--===[ ฟังก์ชันตีบอส + ถืออาวุธ ]===--
 local function AttackBoss(bossModel)
 	local char, hrp = waitForCharacter()
 	local Mon = bossModel:FindFirstChild("HumanoidRootPart")
 	local hum = bossModel:FindFirstChild("Humanoid")
 
 	if Mon and hum and hum.Health > 0 then
+		AutoEquipWeapon() -- ✅ ถืออาวุธอัตโนมัติ
 		hrp.CFrame = Mon.CFrame * CFrame.new(0,0,5)
-		Remotes:FireServer("Server","Sword","M1s","Dual Dagger",1)
+		Remotes:FireServer("Server","Sword","M1s",Weapon,1)
 		task.wait(0.2)
 		for i=1,4 do
-			Remotes:FireServer("Server","Sword","Skill"..i,"Dual Dagger")
-			task.wait(0.2)
+			Remotes:FireServer("Server","Sword","Skill"..i,Weapon)
+			task.wait(Delay)
 		end
 		return true
 	end
 	return false
 end
 
--- ระบบตรวจ SJW ทุก 10 วิ
+--===[ ตรวจ SJW ทุก 10 วิ ]===--
 local latestSJW = nil
 task.spawn(function()
 	while true do
@@ -165,12 +180,11 @@ task.spawn(function()
 		else
 			latestSJW = nil
 		end
-
 		task.wait(10)
 	end
 end)
 
--- ระบบ AutoFarm หลัก
+--===[ ระบบ AutoFarm หลัก ]===--
 task.spawn(function()
 	while true do
 		if getgenv().AutoFarmMihawk and getgenv().gx then
@@ -192,7 +206,7 @@ task.spawn(function()
 	end
 end)
 
--- เปิด AutoFarm + AutoZoom ตอนเริ่มต้น
+--===[ เปิด AutoFarm + AutoZoom ตอนเริ่มต้น ]===--
 task.delay(2, function()
 	ToggleAutoFarm(true)
 	EnableAutoZoom(true)
